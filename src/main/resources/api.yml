@@ -1,0 +1,255 @@
+openapi: 3.0.3
+info:
+  title: Bank and Transaction Microservices API
+  description: Unified API documentation for Bank Account and Transaction microservices.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8085/api
+    description: Local development server
+paths:
+  /bank-accounts:
+    post:
+      summary: Create a new bank account
+      description: Creates a new bank account with the provided details.
+      tags:
+        - Bank Accounts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankAccount'
+      responses:
+        '201':
+          description: Bank account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+        '400':
+          description: Invalid input data
+        '500':
+          description: Internal server error
+  /bank-accounts/{id}:
+    get:
+      summary: Retrieve a bank account by ID
+      description: Fetches the details of a bank account by its unique ID.
+      tags:
+        - Bank Accounts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique ID of the bank account
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bank account retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccount'
+        '404':
+          description: Bank account not found
+        '500':
+          description: Internal server error
+  /transactions/deposit:
+    post:
+      summary: Deposit funds to a bank account
+      description: Creates a deposit transaction and updates the balance of the specified account.
+      tags:
+        - Transactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountId:
+                  type: string
+                  description: The ID of the account to deposit funds into.
+                  example: "673d8361c16de07a0ef97a81"
+                amount:
+                  type: number
+                  format: double
+                  description: The amount to deposit.
+                  example: 500.0
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Invalid request
+        '404':
+          description: Account not found
+        '500':
+          description: Internal server error
+  /transactions/withdraw:
+    post:
+      summary: Withdraw funds from a bank account
+      description: Creates a withdrawal transaction and updates the balance of the specified account.
+      tags:
+        - Transactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountId:
+                  type: string
+                  description: The ID of the account to withdraw funds from.
+                  example: "673d8361c16de07a0ef97a81"
+                amount:
+                  type: number
+                  format: double
+                  description: The amount to withdraw.
+                  example: 200.0
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Invalid request or insufficient balance
+        '404':
+          description: Account not found
+        '500':
+          description: Internal server error
+  /transactions/transfer:
+    post:
+      summary: Transfer funds between two bank accounts
+      description: Creates a transfer transaction and updates the balances of the source and destination accounts.
+      tags:
+        - Transactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceAccountId:
+                  type: string
+                  description: The ID of the account to transfer funds from.
+                  example: "673d8361c16de07a0ef97a81"
+                destinationAccountId:
+                  type: string
+                  description: The ID of the account to transfer funds to.
+                  example: "673d7b34cdd87444b1c2dc7a"
+                amount:
+                  type: number
+                  format: double
+                  description: The amount to transfer.
+                  example: 300.0
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Invalid request or insufficient balance
+        '404':
+          description: Account not found
+        '500':
+          description: Internal server error
+  /transactions:
+    get:
+      summary: Retrieve global transaction history
+      description: Fetches all transactions, sorted by date in descending order.
+      tags:
+        - Transactions
+      responses:
+        '200':
+          description: List of all transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '500':
+          description: Internal server error
+  /transactions/account/{accountId}:
+    get:
+      summary: Retrieve transaction history for a specific account
+      description: Fetches transactions where the account is either the source or destination.
+      tags:
+        - Transactions
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: The ID of the account whose transactions are to be retrieved.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of transactions for the specified account
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Account not found
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    BankAccount:
+      type: object
+      properties:
+        accountHolder:
+          type: string
+          description: Name of the account holder.
+          example: "John Doe"
+        balance:
+          type: number
+          format: double
+          description: Current balance of the account.
+          example: 1000.50
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the transaction.
+          example: "673d785e270a477eb1968ebe"
+        type:
+          type: string
+          enum:
+            - DEPOSIT
+            - WITHDRAWAL
+            - TRANSFER
+          description: Type of transaction.
+          example: "DEPOSIT"
+        amount:
+          type: number
+          format: double
+          description: Amount involved in the transaction.
+          example: 500.0
+        date:
+          type: string
+          format: date-time
+          description: Date and time of the transaction.
+          example: "2024-11-20T08:00:00Z"
+        sourceAccountId:
+          type: string
+          description: Originating account ID (only for withdrawal or transfer).
+          example: "1"
+        destinationAccountId:
+          type: string
+          description: Destination account ID (only for transfer).
+          example: "2"
